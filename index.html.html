@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>診所場地預約系統</title>
+    <!-- 引入 html2canvas 庫用於圖片轉換 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans TC", sans-serif;
+        }
+        body {
+            background-color: #f1f5f9;
+            margin: 0;
+            padding: 24px 16px;
+            display: flex;
+            justify-content: center;
+            color: #1e293b;
+        }
+        .main-wrapper {
+            max-width: 720px;
+            width: 100%;
+        }
+        .container {
+            background: #ffffff;
+            padding: 32px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+            margin-bottom: 24px;
+        }
+        h2 {
+            color: #0f172a;
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 24px;
+            font-size: 24px;
+            font-weight: 700;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 14px;
+            letter-spacing: 0.5px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label.section-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #334155;
+            font-size: 14px;
+        }
+        select, input[type="text"], input[type="date"], input[type="time"], textarea {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            font-size: 15px;
+            background-color: #f8fafc;
+            color: #0f172a;
+            transition: all 0.2s ease;
+        }
+        select:focus, input[type="text"]:focus, input[type="date"]:focus, input[type="time"]:focus, textarea:focus {
+            border-color: #0d9488;
+            background-color: #ffffff;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+        }
+
+        /* 複選 Checkbox 樣式 */
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            background-color: #f8fafc;
+            border: 1px solid #cbd5e1;
+            padding: 10px 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+        .checkbox-item:hover {
+            border-color: #0d9488;
+            background-color: #f0fdfa;
+        }
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #0d9488;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        .checkbox-item span {
+            font-size: 14px;
+            font-weight: 500;
+            color: #334155;
+        }
+
+        .time-group {
+            display: flex;
+            gap: 12px;
+        }
+        .time-group div {
+            flex: 1;
+        }
+        .custom-input {
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .btn-submit {
+            background-color: #0d9488;
+            color: white;
+            border: none;
+            padding: 14px;
+            width: 100%;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 12px;
+            transition: background-color 0.2s;
+            box-shadow: 0 4px 12px rgba(13, 148, 136, 0.2);
+        }
+        .btn-submit:hover {
+            background-color: #0f766e;
+        }
+
+        /* 預覽與編輯區塊 */
+        .preview-wrapper {
+            display: none;
+            margin-top: 28px;
+            border-top: 2px dashed #e2e8f0;
+            padding-top: 24px;
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .edit-hint {
+            font-size: 12px;
+            color: #059669;
+            background-color: #ecfdf5;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            border: 1px solid #a7f3d0;
+        }
+
+        /* LINE 可編輯文字框樣式 */
+        .editable-text-area {
+            width: 100%;
+            height: 220px;
+            padding: 16px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #1e293b;
+            background-color: #fafafa;
+            border: 2px solid #cbd5e1;
+            border-radius: 12px;
+            resize: vertical;
+            font-family: inherit;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .editable-text-area:focus {
+            border-color: #06C755;
+            background-color: #ffffff;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(6, 199, 85, 0.15);
+        }
+
+        /* 操作按鈕組 */
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 14px;
+            margin-bottom: 32px;
+        }
+        .btn-action {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+        .btn-line {
+            background-color: #06C755;
+            color: white;
+            box-shadow: 0 4px 12px rgba(6, 199, 85, 0.2);
+        }
+        .btn-line:hover {
+            background-color: #05b34c;
+        }
+        .btn-download {
+            background-color: #2563eb;
+            color: white;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        }
+        .btn-download:hover {
+            background-color: #1d4ed8;
+        }
+
+        /* LINE 圖卡結構 */
+        #lineCard {
+            width: 580px;
+            background: #ffffff;
+            border-radius: 16px;
+            border: 2px solid #e2e8f0;
+            padding: 28px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            margin: 0 auto;
+            box-sizing: border-box;
+            background-image: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid #0d9488;
+            padding-bottom: 14px;
+            margin-bottom: 20px;
+        }
+        .card-header h3 {
+            margin: 0;
+            color: #0d9488;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card-header .badge {
+            background-color: #ccfbf1;
+            color: #0f766e;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .card-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+        .card-item {
+            background: #f1f5f9;
+            padding: 12px 14px;
+            border-radius: 10px;
+        }
+        .card-item.full-width {
+            grid-column: span 2;
+        }
+        .card-label {
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 6px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .card-value {
+            font-size: 15px;
+            color: #0f172a;
+            font-weight: 600;
+            word-break: break-word;
+        }
+
+        /* 多區域標籤樣式 */
+        .area-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .area-tag {
+            background-color: #e0f2fe;
+            color: #0369a1;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .card-footer {
+            margin-top: 20px;
+            padding-top: 14px;
+            border-top: 1px dashed #cbd5e1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: #64748b;
+        }
+        .card-notice {
+            background-color: #fef2f2;
+            color: #dc2626;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            grid-column: span 2;
+            border: 1px solid #fecaca;
+        }
+
+        /* 響應式佈局 */
+        @media (max-width: 640px) {
+            .container {
+                padding: 20px;
+            }
+            #lineCard {
+                width: 100%;
+                padding: 20px;
+            }
+            .checkbox-group {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-wrapper">
+    <div class="container">
+        <h2>🏥 診所場地預約系統</h2>
+        <form id="bookingForm">
+            <!-- 申請人 -->
+            <div class="form-group">
+                <label class="section-label" for="applicant">申請人 / 單位 *</label>
+                <input type="text" id="applicant" placeholder="例如：行銷部 小明" required>
+            </div>
+
+            <!-- 選擇院所 -->
+            <div class="form-group">
+                <label class="section-label" for="clinic">選擇院所 *</label>
+                <select id="clinic" required>
+                    <option value="中山院">中山院</option>
+                </select>
+            </div>
+
+            <!-- 預約區域 (複選) -->
+            <div class="form-group">
+                <label class="section-label">預約區域（可複選）*</label>
+                <div class="checkbox-group">
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="area" value="InBody 測量區">
+                        <span>InBody 測量區</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="area" value="診間">
+                        <span>診間</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="area" value="美顏針室">
+                        <span>美顏針室</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" name="area" value="其他" id="otherAreaCheckbox" onchange="toggleOtherAreaInput()">
+                        <span>其他</span>
+                    </label>
+                </div>
+                <input type="text" id="otherAreaInput" class="custom-input" placeholder="請輸入自訂區域名稱">
+            </div>
+
+            <!-- 日期與時間 -->
+            <div class="form-group">
+                <label class="section-label" for="date">使用日期 *</label>
+                <input type="date" id="date" required>
+            </div>
+
+            <div class="form-group time-group">
+                <div>
+                    <label class="section-label" for="startTime">開始時間 *</label>
+                    <input type="time" id="startTime" required>
+                </div>
+                <div>
+                    <label class="section-label" for="endTime">結束時間 *</label>
+                    <input type="time" id="endTime" required>
+                </div>
+            </div>
+
+            <!-- 使用目的 -->
+            <div class="form-group">
+                <label class="section-label" for="purpose">使用目的 *</label>
+                <select id="purpose" onchange="toggleOtherPurposeInput()" required>
+                    <option value="醫師衛教拍攝">醫師衛教拍攝</option>
+                    <option value="素人體驗">素人體驗</option>
+                    <option value="醫師+素人體驗拍攝使用">醫師+素人體驗拍攝使用</option>
+                    <option value="其他">其他 (自行填寫)</option>
+                </select>
+                <input type="text" id="otherPurposeInput" class="custom-input" placeholder="請輸入自訂目的">
+            </div>
+
+            <!-- 參與人員與備註 -->
+            <div class="form-group">
+                <label class="section-label" for="participants">參與 / 協助人員</label>
+                <input type="text" id="participants" placeholder="例如：王醫師、MD 小花">
+            </div>
+
+            <div class="form-group">
+                <label class="section-label" for="note">備註說明</label>
+                <textarea id="note" rows="2" placeholder="特殊器材需求或注意事項..."></textarea>
+            </div>
+
+            <button type="button" class="btn-submit" onclick="generatePreview()">產生預約訊息與圖片</button>
+        </form>
+
+        <!-- 預覽與編輯區塊 -->
+        <div class="preview-wrapper" id="previewWrapper">
+            <!-- 1. 可編輯 LINE 文字預覽框 -->
+            <div class="section-header">
+                <span class="section-title">💬 LINE 文字訊息預覽</span>
+                <span class="edit-hint">✏️ 內容可直接點擊修改</span>
+            </div>
+            
+            <textarea id="lineMessageEditor" class="editable-text-area" placeholder="訊息內容將顯示於此..."></textarea>
+
+            <!-- 按鈕組 -->
+            <div class="action-buttons">
+                <button class="btn-action btn-line" onclick="copyTextNotification()">
+                    📋 複製 LINE 文字訊息 (含已修改內容)
+                </button>
+                <button class="btn-action btn-download" onclick="downloadCardImage()">
+                    📸 下載預約圖片 (.png)
+                </button>
+            </div>
+
+            <!-- 2. 下載用的圖卡 HTML 結構 -->
+            <div class="section-header" style="margin-top: 20px;">
+                <span class="section-title">🖼️ 預約圖卡預覽</span>
+            </div>
+            
+            <div id="lineCard">
+                <div class="card-header">
+                    <h3>📍 場地預約通知</h3>
+                    <span class="badge" id="cClinic">中山院</span>
+                </div>
+                <div class="card-body">
+                    <div class="card-item full-width">
+                        <div class="card-label">預約區域 (複選)</div>
+                        <div class="card-value" id="cAreaContainer">-</div>
+                    </div>
+                    <div class="card-item">
+                        <div class="card-label">預約申請人</div>
+                        <div class="card-value" id="cApplicant">-</div>
+                    </div>
+                    <div class="card-item">
+                        <div class="card-label">使用日期</div>
+                        <div class="card-value" id="cDate">-</div>
+                    </div>
+                    <div class="card-item full-width">
+                        <div class="card-label">使用時間段</div>
+                        <div class="card-value" id="cTime">-</div>
+                    </div>
+                    <div class="card-item full-width">
+                        <div class="card-label">使用目的</div>
+                        <div class="card-value" id="cPurpose">-</div>
+                    </div>
+                    <div class="card-item full-width">
+                        <div class="card-label">參與 / 協助人員</div>
+                        <div class="card-value" id="cParticipants">-</div>
+                    </div>
+                    <div class="card-item full-width">
+                        <div class="card-label">備註說明</div>
+                        <div class="card-value" id="cNote">-</div>
+                    </div>
+                    <div class="card-notice">
+                        📢 請 @店長 @副店長 確認並留意場地安排！
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <span>診所預約系統自動生成</span>
+                    <span id="cTimestamp"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 預設日期為今天
+    document.getElementById('date').valueAsDate = new Date();
+
+    // 控制區域「其他」自訂輸入框
+    function toggleOtherAreaInput() {
+        const checkbox = document.getElementById('otherAreaCheckbox');
+        const input = document.getElementById('otherAreaInput');
+        if (checkbox.checked) {
+            input.style.display = 'block';
+            input.focus();
+        } else {
+            input.style.display = 'none';
+            input.value = '';
+        }
+    }
+
+    // 控制目的「其他」自訂輸入框
+    function toggleOtherPurposeInput() {
+        const select = document.getElementById('purpose');
+        const input = document.getElementById('otherPurposeInput');
+        if (select.value === '其他') {
+            input.style.display = 'block';
+            input.focus();
+        } else {
+            input.style.display = 'none';
+            input.value = '';
+        }
+    }
+
+    // 取得所有選取的區域陣列
+    function getSelectedAreas() {
+        const checkboxes = document.querySelectorAll('input[name="area"]:checked');
+        let selectedAreas = [];
+
+        checkboxes.forEach(cb => {
+            if (cb.value === '其他') {
+                const customVal = document.getElementById('otherAreaInput').value.trim();
+                selectedAreas.push(customVal ? customVal : '其他');
+            } else {
+                selectedAreas.push(cb.value);
+            }
+        });
+
+        return selectedAreas;
+    }
+
+    // 產生預約訊息與圖片
+    function generatePreview() {
+        const applicant = document.getElementById('applicant').value.trim();
+        const date = document.getElementById('date').value;
+        const startTime = document.getElementById('startTime').value;
+        const endTime = document.getElementById('endTime').value;
+
+        // 取得複選區域
+        const selectedAreas = getSelectedAreas();
+
+        if (!applicant || !date || !startTime || !endTime) {
+            alert('請填寫所有必填欄位 (*)');
+            return;
+        }
+
+        if (selectedAreas.length === 0) {
+            alert('請至少勾選一個「預約區域」！');
+            return;
+        }
+
+        // 取得選擇內容
+        const clinic = document.getElementById('clinic').value;
+
+        let purpose = document.getElementById('purpose').value;
+        if (purpose === '其他') {
+            purpose = document.getElementById('otherPurposeInput').value.trim() || '其他';
+        }
+
+        const participants = document.getElementById('participants').value.trim() || '無';
+        const note = document.getElementById('note').value.trim() || '無';
+        const selectedAreasStr = selectedAreas.join('、');
+
+        // 1. 組裝並填入可編輯 TEXTAREA 內容
+        const messageText = `📌【場地預約通知】\n------------------------\n📍 院所：${clinic}\n🏢 區域：${selectedAreasStr}\n📅 日期：${date}\n⏰ 時間：${startTime} ~ ${endTime}\n🎯 目的：${purpose}\n👤 申請人：${applicant}\n👥 參與人員：${participants}\n📝 備註：${note}\n------------------------\n📢 請 @店長 @副店長 確認並留意場地安排！`;
+
+        document.getElementById('lineMessageEditor').value = messageText;
+
+        // 2. 渲染資料至圖卡
+        document.getElementById('cClinic').innerText = clinic;
+        
+        // 渲染多區域標籤 (Badges)
+        const areaContainer = document.getElementById('cAreaContainer');
+        areaContainer.innerHTML = '';
+        const tagsWrapper = document.createElement('div');
+        tagsWrapper.className = 'area-tags';
+        selectedAreas.forEach(area => {
+            const tag = document.createElement('span');
+            tag.className = 'area-tag';
+            tag.innerText = area;
+            tagsWrapper.appendChild(tag);
+        });
+        areaContainer.appendChild(tagsWrapper);
+
+        document.getElementById('cApplicant').innerText = applicant;
+        document.getElementById('cDate').innerText = date;
+        document.getElementById('cTime').innerText = `${startTime} ~ ${endTime}`;
+        document.getElementById('cPurpose').innerText = purpose;
+        document.getElementById('cParticipants').innerText = participants;
+        document.getElementById('cNote').innerText = note;
+
+        // 設定生成時間
+        const now = new Date();
+        document.getElementById('cTimestamp').innerText = `填單時間: ${now.getMonth() + 1}/${now.getDate()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+        // 顯示預覽與編輯區塊
+        const wrapper = document.getElementById('previewWrapper');
+        wrapper.style.display = 'block';
+        wrapper.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // 下載圖片功能
+    function downloadCardImage() {
+        const card = document.getElementById('lineCard');
+        
+        // 使用 html2canvas 將 DOM 轉為 canvas 圖檔
+        html2canvas(card, {
+            scale: 2, // 高畫質
+            backgroundColor: null,
+            useCORS: true
+        }).then(canvas => {
+            const link = document.createElement('a');
+            const dateStr = document.getElementById('cDate').innerText;
+            const selectedAreas = getSelectedAreas().join('、');
+            
+            link.download = `【預約通知】${dateStr}_${selectedAreas}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+    }
+
+    // 複製純文字訊息 (讀取目前編輯框內的最新內容)
+    function copyTextNotification() {
+        const currentText = document.getElementById('lineMessageEditor').value;
+
+        if (!currentText.trim()) {
+            alert('目前預覽框內無訊息可複製！');
+            return;
+        }
+
+        // 相容性複製處理
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(currentText).then(() => {
+                alert('已成功複製「最新修改後」的 LINE 訊息！');
+            }).catch(() => {
+                fallbackCopyText(currentText);
+            });
+        } else {
+            fallbackCopyText(currentText);
+        }
+    }
+
+    // 備用複製方案
+    function fallbackCopyText(text) {
+        const textarea = document.getElementById('lineMessageEditor');
+        textarea.select();
+        try {
+            document.execCommand('copy');
+            alert('已成功複製「最新修改後」的 LINE 訊息！');
+        } catch (err) {
+            alert('複製失敗，請手動全選文字複製。');
+        }
+    }
+</script>
+
+</body>
+</html>
